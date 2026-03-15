@@ -1,8 +1,11 @@
 extends CharacterBody3D
 
 const SPEED = 3.0
-const JUMP_VELOCITY = 4.5
-const DODGE_SPEED = 2.0
+const JUMP_VELOCITY = 3.5
+const DODGE_SPEED = 1.75
+
+
+
 
 @onready var anim = $AnimationPlayer
 @onready var visuals = $player
@@ -14,6 +17,7 @@ var wait_time := 6.0
 var is_attacking := false
 var combo_step := 0
 var combo_queued := false
+var attack_locked := false
 
 # --- DODGE ---
 var is_dodging := false
@@ -22,10 +26,11 @@ var invincible := false
 
 # --- STATS ---
 var health := 100
-
+var fp := 50
+var stamina := 120
 
 func _ready():
-	anim.play("Global/idle4")
+	anim.play("idle4")
 	randomize_wait_time()
 
 
@@ -47,6 +52,7 @@ func _physics_process(delta):
 	and not is_dodging \
 	and not is_attacking:
 		start_dodge()
+
 
 	if Input.is_action_just_pressed("attack") and is_on_floor():
 
@@ -87,6 +93,36 @@ func _physics_process(delta):
 		var len = anim.current_animation_length
 		var progress = pos / len
 
+		var input_dir := Input.get_vector(
+			"move_left",
+			"move_right",
+			"move_forward",
+			"move_backward"
+		)
+
+		var cam_basis: Basis = $CameraMount/h.global_transform.basis
+
+		var direction: Vector3 = (
+			cam_basis * Vector3(input_dir.x,0,input_dir.y)
+		).normalized()
+
+
+		# ===== Startup turning (Souls mechanic) =====
+		if progress < 0.2 and direction != Vector3.ZERO:
+
+			var angle = atan2(direction.x,direction.z)
+
+			visuals.rotation.y = lerp_angle(
+				visuals.rotation.y,
+				angle,
+				12 * delta
+			)
+
+		else:
+			attack_locked = true
+
+
+		# ===== Combo system =====
 		if combo_queued and progress > 0.85:
 
 			combo_queued = false
@@ -94,11 +130,12 @@ func _physics_process(delta):
 
 			match combo_step:
 				2:
-					anim.play("Global/slash3",0.15)
+					anim.play("slash3",0.15)
 				3:
-					anim.play("Global/slash2_p1",0.15)
+					anim.play("slash",0.15)
 				4:
-					anim.play("Global/slash2_p3",0.15)
+					anim.play("attack2",0.15)
+
 
 		velocity.x = move_toward(velocity.x,0,SPEED)
 		velocity.z = move_toward(velocity.z,0,SPEED)
@@ -137,9 +174,9 @@ func _physics_process(delta):
 		just_jumped = true
 
 		if direction != Vector3.ZERO:
-			anim.play("Global/jump",0.1)
+			anim.play("jump",0.1)
 		else:
-			anim.play("Global/jump2",0.1)
+			anim.play("jump2",0.1)
 
 
 	# =========================
@@ -153,8 +190,8 @@ func _physics_process(delta):
 
 		idle_timer = 0
 
-		if is_on_floor() and not just_jumped and anim.current_animation != "Global/run":
-			anim.play("Global/run",0.15)
+		if is_on_floor() and not just_jumped and anim.current_animation != "run":
+			anim.play("run",0.15)
 
 		var target_angle = atan2(direction.x,direction.z)
 
@@ -170,7 +207,7 @@ func _physics_process(delta):
 		velocity.z = move_toward(velocity.z,0,SPEED)
 
 		if is_on_floor() and not just_jumped and not "idle" in anim.current_animation:
-			anim.play("Global/idle4",0.2)
+			anim.play("idle4",0.2)
 
 
 	move_and_slide()
@@ -182,7 +219,7 @@ func _physics_process(delta):
 
 	if direction == Vector3.ZERO and is_on_floor() and not just_jumped:
 
-		if anim.current_animation == "Global/idle4":
+		if anim.current_animation == "idle4":
 
 			idle_timer += delta
 
@@ -200,8 +237,9 @@ func start_attack():
 	is_attacking = true
 	combo_step = 1
 	combo_queued = false
+	attack_locked = false
 
-	anim.play("Global/slash2_p1",0.15)
+	anim.play("slash",0.15)
 
 
 
@@ -214,7 +252,7 @@ func start_dodge():
 	is_dodging = true
 	invincible = false
 
-	anim.play("Global/roll1",0.1)
+	anim.play("roll1",0.1)
 
 	var input_dir := Input.get_vector(
 		"move_left",
@@ -226,7 +264,6 @@ func start_dodge():
 	var cam_basis: Basis = $CameraMount/h.global_transform.basis
 
 	if input_dir.length() < 0.1:
-		# backstep nếu không có input
 		dodge_dir = -visuals.global_transform.basis.z
 	else:
 		dodge_dir = (
@@ -235,7 +272,6 @@ func start_dodge():
 
 	dodge_dir = dodge_dir.normalized()
 
-	# xoay body theo hướng roll
 	var angle = atan2(dodge_dir.x,dodge_dir.z)
 	visuals.rotation.y = angle
 
@@ -280,12 +316,12 @@ func play_random_idle():
 	randomize_wait_time()
 
 	var random_anims = [
-		"Global/idle2",
-		"Global/idle3"
+		"idle2",
+		"idle3"
 	]
 
 	anim.play(random_anims.pick_random(),0.2)
-	anim.queue("Global/idle4")
+	anim.queue("idle4")
 
 
 func randomize_wait_time():
@@ -299,7 +335,7 @@ func randomize_wait_time():
 
 func _on_animation_player_animation_finished(anim_name):
 
-	if "slash" in anim_name:
+	if is_attacking:
 
 		if combo_queued:
 			return
@@ -308,7 +344,7 @@ func _on_animation_player_animation_finished(anim_name):
 		combo_step = 0
 		combo_queued = false
 
-		anim.play("Global/idle4",0.2)
+		anim.play("idle4",0.2)
 
 	if "roll" in anim_name:
 		end_dodge()
