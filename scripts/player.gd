@@ -1,7 +1,7 @@
 extends CharacterBody3D
 
 # --- CẤU HÌNH CƠ BẢN ---
-const SPEED = 3.0
+const SPEED = 1.5
 const JUMP_VELOCITY = 3.5
 const DODGE_SPEED = 1.75
 
@@ -169,12 +169,16 @@ func start_dodge():
 	is_dodging = true
 	invincible = false
 	anim.play("roll1", 0.1)
+
 	var input_dir := Input.get_vector("move_left", "move_right", "move_forward", "move_backward")
 	var cam_basis: Basis = $CameraMount/h.global_transform.basis
+
 	if input_dir.length() < 0.1:
-		dodge_dir = -visuals.global_transform.basis.z
+		# dodge forward nếu không bấm gì
+		dodge_dir = (-visuals.global_transform.basis.z).normalized()
 	else:
 		dodge_dir = (cam_basis * Vector3(input_dir.x, 0, input_dir.y)).normalized()
+
 	visuals.rotation.y = atan2(dodge_dir.x, dodge_dir.z)
 
 func enable_iframe(): invincible = true

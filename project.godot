@@ -25,6 +25,10 @@ folder_colors={
 "res://assets/": "red"
 }
 
+[global_group]
+
+Player=""
+
 [input]
 
 move_forward={

@@ -1,6 +1,7 @@
 [gd_scene format=3 uid="uid://b2dglbn243y1y"]
 
-[ext_resource type="PackedScene" uid="uid://c6qukfgxctj5i" path="res://player.tscn" id="1_4qc02"]
+[ext_resource type="PackedScene" uid="uid://c6qukfgxctj5i" path="res://Node/player.tscn" id="1_4qc02"]
+[ext_resource type="PackedScene" uid="uid://dh51oktj8frmn" path="res://Node/mushito.tscn" id="2_70yvk"]
 
 [sub_resource type="ProceduralSkyMaterial" id="ProceduralSkyMaterial_4qc02"]
 sky_horizon_color = Color(0.66224277, 0.6717428, 0.6867428, 1)
@@ -29,7 +30,7 @@ use_collision = true
 size = Vector3(50, 1, 60)
 
 [node name="Player" parent="." unique_id=1971536126 instance=ExtResource("1_4qc02")]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.7515768, 0)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.7515768, -2.79777)
 
 [node name="CSGBox3D2" type="CSGBox3D" parent="." unique_id=865488959]
 transform = Transform3D(0.32083613, 0, 0, 0, 1, 0, 0, 0, 1, -1.4462745, 0.7861154, 0)
@@ -40,3 +41,6 @@ size = Vector3(3, 0.5, 2)
 transform = Transform3D(0.32083613, 0, 0, 0, 0.9999999, 0, 0, 0, 0.9999999, -1.4462748, 0.5005836, 0)
 use_collision = true
 size = Vector3(3, 0.5, 2)
+
+[node name="Mushita" parent="." unique_id=1340222959 instance=ExtResource("2_70yvk")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.55912113, 0.7501271)
